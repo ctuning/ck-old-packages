@@ -1,0 +1,108 @@
+diff --git a/tensorflow/contrib/cmake/CMakeLists.txt b/tensorflow/contrib/cmake/CMakeLists.txt
+index 3c8dc86..0ff0bea 100644
+--- a/tensorflow/contrib/cmake/CMakeLists.txt
++++ b/tensorflow/contrib/cmake/CMakeLists.txt
+@@ -5,7 +5,8 @@ cmake_minimum_required(VERSION 3.5)
+ project(tensorflow C CXX)
+ 
+ # Set C++14 as standard for the whole project
+-set(CMAKE_CXX_STANDARD 14)
++# set(CMAKE_CXX_STANDARD 14)
++set(CMAKE_CXX_STANDARD 11)
+ 
+ # Actual source is the ../../.. directory
+ get_filename_component(tf_contrib_source_dir ${tensorflow_SOURCE_DIR} PATH)
+@@ -156,7 +157,7 @@ if(UNIX)
+ endif()
+ 
+ if (tensorflow_ENABLE_GPU)
+-  if (WIN32)
++  # if (WIN32)
+     find_package(CUDA 8.0 REQUIRED)
+ 
+     # by default we assume compute cabability 3.5 and 5.2. If you change this change it in
+@@ -170,8 +171,10 @@ if (tensorflow_ENABLE_GPU)
+ 
+     # add cudnn
+     include_directories(${CUDNN_HOME})
++    # set(CUDA_LIBRARIES ${CUDA_LIBRARIES} ${CUDA_CUDA_LIBRARY} ${CUDA_CUBLAS_LIBRARIES} ${CUDA_CUFFT_LIBRARIES}
++    #   ${CUDA_curand_LIBRARY} ${CUDA_cupti_LIBRARY} ${CUDNN_HOME}/lib/x64/cudnn.lib)
+     set(CUDA_LIBRARIES ${CUDA_LIBRARIES} ${CUDA_CUDA_LIBRARY} ${CUDA_CUBLAS_LIBRARIES} ${CUDA_CUFFT_LIBRARIES}
+-      ${CUDA_curand_LIBRARY} ${CUDA_cupti_LIBRARY} ${CUDNN_HOME}/lib/x64/cudnn.lib)
++      ${CUDA_curand_LIBRARY} ${CUDA_cupti_LIBRARY} ${CUDNN_HOME}/lib64/libcudnn_static.a)
+ 
+     # create cuda_config.h
+     FILE(WRITE ${tensorflow_source_dir}/third_party/gpus/cuda/cuda_config.h
+@@ -187,29 +190,36 @@ if (tensorflow_ENABLE_GPU)
+     # tf assumes in various places header files to be in cuda/include. On windows the cuda sdk
+     # installs them under cuda/version/include and to avoid that we need to change tf we copy a
+     # few files to cuda/include
+-    FILE(COPY
+-      ${CUDA_TOOLKIT_TARGET_DIR}/include/cuda.h ${CUDA_TOOLKIT_TARGET_DIR}/include/cuComplex.h
+-      ${CUDA_TOOLKIT_TARGET_DIR}/include/cublas_v2.h ${CUDNN_HOME}/include/cudnn.h
+-      ${CUDA_TOOLKIT_TARGET_DIR}/include/cufft.h ${CUDA_TOOLKIT_TARGET_DIR}/include/curand.h
+-      ${CUDA_TOOLKIT_TARGET_DIR}/include/cuda_runtime_api.h
+-      DESTINATION ${tensorflow_source_dir}/third_party/gpus/cuda/include
+-    )
++    # FILE(COPY
++    #   ${CUDA_TOOLKIT_TARGET_DIR}/include/cuda.h ${CUDA_TOOLKIT_TARGET_DIR}/include/cuComplex.h
++    #   ${CUDA_TOOLKIT_TARGET_DIR}/include/cublas_v2.h ${CUDNN_HOME}/include/cudnn.h
++    #   ${CUDA_TOOLKIT_TARGET_DIR}/include/cufft.h ${CUDA_TOOLKIT_TARGET_DIR}/include/curand.h
++    #   ${CUDA_TOOLKIT_TARGET_DIR}/include/cuda_runtime_api.h
++    #   DESTINATION ${tensorflow_source_dir}/third_party/gpus/cuda/include
++    # )
+     include_directories(${tensorflow_source_dir}/third_party/gpus)
++
++    include_directories(${CUDA_TOOLKIT_TARGET_DIR}/include)
++    include_directories(${CUDA_TOOLKIT_TARGET_DIR})
++
++    get_filename_component(cuda_parent_dir ${CUDA_TOOLKIT_TARGET_DIR} DIRECTORY)
++    include_directories(${cuda_parent_dir})
++
+     # add cuda libraries to tensorflow_EXTERNAL_LIBRARIES
+     list(APPEND tensorflow_EXTERNAL_LIBRARIES ${CUDA_LIBRARIES})
+-  endif()
++  # endif()
+ endif()
+ 
+ # Let's get to work!
+ include(tf_core_framework.cmake)
+ include(tf_tools.cmake)
+ # NOTE: Disabled until issue #3996 is fixed.
+-# include(tf_stream_executor.cmake)
+-if (tensorflow_ENABLE_GPU)
+-  if (WIN32)
+-    include(tf_stream_executor.cmake)
+-  endif()
+-endif()
++include(tf_stream_executor.cmake)
++# if (tensorflow_ENABLE_GPU)
++#   if (WIN32)
++#     include(tf_stream_executor.cmake)
++#   endif()
++# endif()
+ 
+ include(tf_core_cpu.cmake)
+ include(tf_core_ops.cmake)
+diff --git a/tensorflow/contrib/cmake/tf_python.cmake b/tensorflow/contrib/cmake/tf_python.cmake
+index 0605ffb..cdc4969 100755
+--- a/tensorflow/contrib/cmake/tf_python.cmake
++++ b/tensorflow/contrib/cmake/tf_python.cmake
+@@ -685,7 +685,7 @@ if(WIN32)
+         $<TARGET_OBJECTS:tf_tools_transform_graph_lib>
+         $<$<BOOL:${tensorflow_ENABLE_GRPC_SUPPORT}>:$<TARGET_OBJECTS:tf_core_distributed_runtime>>
+         $<TARGET_OBJECTS:tf_core_kernels>
+-        $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<TARGET_OBJECTS:tf_core_kernels_cpu_only>>
++        # $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<TARGET_OBJECTS:tf_core_kernels_cpu_only>>
+         $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<TARGET_OBJECTS:tf_stream_executor>>
+     )
+     target_include_directories(pywrap_tensorflow_internal_static PUBLIC
+@@ -720,7 +720,7 @@ add_library(pywrap_tensorflow_internal SHARED
+     $<TARGET_OBJECTS:tf_tools_transform_graph_lib>
+     $<$<BOOL:${tensorflow_ENABLE_GRPC_SUPPORT}>:$<TARGET_OBJECTS:tf_core_distributed_runtime>>
+     $<TARGET_OBJECTS:tf_core_kernels>
+-    $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<TARGET_OBJECTS:tf_core_kernels_cpu_only>>
++    # $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<TARGET_OBJECTS:tf_core_kernels_cpu_only>>
+     $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<TARGET_OBJECTS:tf_stream_executor>>
+     ${pywrap_tensorflow_deffile}
+ )
