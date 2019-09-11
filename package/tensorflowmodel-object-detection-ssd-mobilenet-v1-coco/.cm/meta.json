@@ -49,7 +49,7 @@
     "ssd-mobilenet",
     "ssd-mobilenet-v1",
     "vcoco",
-    "channel-stable"
+    "deprecated"
   ],
   "use_scripts_from_another_entry": {
     "data_uoa": "c412930408fb8271",
